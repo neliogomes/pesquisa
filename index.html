@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Avaliação Restaurante Três Pinheiros</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: system-ui, -apple-system, sans-serif;
+            background: linear-gradient(135deg, #f9f9f9 0%, #f0f4f8 100%);
+            color: #1a1a1a;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: clamp(2rem, 6vmin, 5rem);
+            gap: clamp(2rem, 7vmin, 4rem);
+            overflow: hidden;
+        }
+
+        .logo {
+            width: clamp(140px, 40vmin, 380px);
+            height: auto;
+            max-width: 80vw;
+        }
+
+        h1 {
+            font-size: clamp(1.8rem, 6.5vmin, 4rem);
+            text-align: center;
+            max-width: 92vw;
+            line-height: 1.15;
+            font-weight: 600;
+        }
+
+        .options {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: clamp(1.5rem, 8vmin, 3.5rem);
+            width: 100%;
+            max-width: 1000px;
+        }
+
+        button.option {
+            --size: clamp(160px, 28vmin, 260px);
+            width: var(--size);
+            height: var(--size);
+            font-size: clamp(5rem, 15vmin, 8rem);
+            background: white;
+            border: 4px solid #d0d0d0;
+            border-radius: 1.5rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            touch-action: manipulation; /* Melhora resposta touch, remove delay 300ms */
+            box-shadow: 0 6px 20px rgba(0,0,0,0.08);
+        }
+
+        /* Ajustes específicos para touch (finger) */
+        @media (pointer: coarse) {
+            button.option {
+                --size: clamp(180px, 32vmin, 300px);
+                font-size: clamp(6rem, 18vmin, 9rem);
+                border-width: 5px;
+            }
+        }
+
+        button.option span {
+            font-size: clamp(1rem, 3.5vmin, 1.4rem);
+            margin-top: 0.8rem;
+            font-weight: 500;
+        }
+
+        button.option:hover,
+        button.option:focus-visible {
+            border-color: #0055bb;
+            background: #f0f7ff;
+            transform: scale(1.06);
+            box-shadow: 0 12px 32px rgba(0, 85, 187, 0.22);
+        }
+
+        button.option.selected {
+            border-color: #0066cc;
+            background: #e6f2ff;
+            transform: scale(1.09);
+            box-shadow: 0 12px 40px rgba(0,102,204,0.25);
+        }
+
+        .thank-you {
+            display: none;
+            font-size: clamp(3rem, 10vmin, 6rem);
+            text-align: center;
+            font-weight: 700;
+            color: #004080;
+            opacity: 0;
+            transform: translateY(40px);
+            transition: all 0.7s ease-out;
+        }
+
+        .thank-you.visible {
+            display: block;
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        @media (orientation: landscape) {
+            .options {
+                flex-wrap: nowrap;
+                gap: clamp(2rem, 5vmin, 4rem);
+            }
+        }
+
+        @media (max-width: 500px) {
+            body { padding: clamp(1.5rem, 5vmin, 3rem); }
+            h1 { font-size: clamp(1.6rem, 7vmin, 3.2rem); }
+        }
+    </style>
+</head>
+<body>
+    <img class="logo" src="logo.png" alt="Logomarca Restaurante Três Pinheiros">
+
+    <h1>Como foi sua experiência no Restaurante Três Pinheiros?</h1>
+
+    <div class="options">
+        <button class="option" data-value="Ótima">😍<span>Ótima</span></button>
+        <button class="option" data-value="Boa">🙂<span>Boa</span></button>
+        <button class="option" data-value="Regular">😐<span>Regular</span></button>
+        <button class="option" data-value="Ruim">😞<span>Ruim</span></button>
+    </div>
+
+    <div class="thank-you" id="thankYou">Obrigado pelo feedback!</div>
+
+    <script>
+        const options = document.querySelectorAll('.option');
+        const thankYou = document.getElementById('thankYou');
+        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyIlT-ajiLMpzd63u1ptdmN4RSwvS6fvj7eleEyaYjDClldKOHP3LSCihq0YGMYkHkm/exec";
+
+        options.forEach(btn => {
+            btn.addEventListener('click', () => {
+                options.forEach(b => b.classList.remove('selected'));
+                btn.classList.add('selected');
+                sendFeedback(btn.dataset.value);
+            });
+        });
+
+        function getTurno() {
+            const h = new Date().getHours();
+            if (h >= 6 && h < 12) return "Manhã";
+            if (h >= 12 && h < 18) return "Tarde";
+            if (h >= 18 && h < 24) return "Noite";
+            return "Madrugada";
+        }
+
+        async function sendFeedback(avaliacao) {
+            const now = new Date();
+            const data = {
+                avaliacao,
+                turno: getTurno(),
+                data: now.toLocaleDateString('pt-BR'),
+                hora: now.toLocaleTimeString('pt-BR', {hour12: false}),
+                timestamp: now.toISOString(),
+                restaurante: "Restaurante Três Pinheiros"
+            };
+
+            // Envio silencioso (best practice para kiosk: no-cors + text/plain)
+            fetch(SCRIPT_URL, {
+                method: 'POST',
+                mode: 'no-cors',
+                redirect: 'follow',
+                headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                body: JSON.stringify(data)
+            }).catch(() => {}); // Erro totalmente silencioso
+
+            showThankYou();
+        }
+
+        function showThankYou() {
+            document.querySelector('.options').style.display = 'none';
+            thankYou.classList.add('visible');
+            setTimeout(reset, 5500); // um pouco mais de tempo em telas grandes
+        }
+
+        function reset() {
+            thankYou.classList.remove('visible');
+            document.querySelector('.options').style.display = 'flex';
+            options.forEach(b => b.classList.remove('selected'));
+        }
+    </script>
+</body>
+</html>
